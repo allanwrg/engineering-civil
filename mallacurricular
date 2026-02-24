@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malla Curricular — Ingeniería Civil</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --border: #1f2d45;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --approved: #00c896;
+    --available: #7c5cfc;
+    --locked: #1e2a3a;
+    --regular: #f0a500;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --grid-cols: 10;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+/* Background grid texture */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: 0;
+}
+
+header {
+position: relative;
+z-index: 10;
+padding: 2rem 2.5rem 1.5rem;
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: flex-end;
+justify-content: space-between;
+gap: 2rem;
+flex-wrap: wrap;
+}
+.header-title h1 {
+font-size: clamp(1.4rem, 3vw, 2.2rem);
+font-weight: 800;
+letter-spacing: -0.02em;
+line-height: 1;
+}
+.header-title h1 span { color: var(–accent); }
+.header-title p {
+margin-top: 0.4rem;
+font-size: 0.8rem;
+color: var(–muted);
+font-family: ‘Space Mono’, monospace;
+letter-spacing: 0.05em;
+}
+.stats {
+display: flex;
+gap: 1.5rem;
+flex-wrap: wrap;
+}
+.stat {
+text-align: center;
+}
+.stat-num {
+font-size: 1.8rem;
+font-weight: 800;
+font-family: ‘Space Mono’, monospace;
+line-height: 1;
+}
+.stat-num.c-accent { color: var(–accent); }
+.stat-num.c-approved { color: var(–approved); }
+.stat-num.c-available { color: var(–available); }
+.stat-num.c-regular { color: var(–regular); }
+.stat-label {
+font-size: 0.65rem;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.08em;
+margin-top: 0.2rem;
+}
+
+/* Legend */
+.legend {
+position: relative;
+z-index: 10;
+padding: 0.75rem 2.5rem;
+border-bottom: 1px solid var(–border);
+display: flex;
+gap: 1.5rem;
+align-items: center;
+flex-wrap: wrap;
+}
+.legend-label { font-size: 0.7rem; color: var(–muted); font-family: ‘Space Mono’, monospace; margin-right: 0.5rem; }
+.leg {
+display: flex;
+align-items: center;
+gap: 0.4rem;
+font-size: 0.72rem;
+color: var(–text);
+cursor: default;
+}
+.leg-dot {
+width: 10px; height: 10px;
+border-radius: 50%;
+flex-shrink: 0;
+}
+.leg-dot.approved { background: var(–approved); }
+.leg-dot.regular { background: var(–regular); }
+.leg-dot.available { background: var(–available); }
+.leg-dot.locked { background: var(–muted); }
+.reset-btn {
+margin-left: auto;
+padding: 0.35rem 1rem;
+border: 1px solid var(–border);
+border-radius: 4px;
+background: transparent;
+color: var(–muted);
+font-family: ‘Space Mono’, monospace;
+font-size: 0.7rem;
+cursor: pointer;
+transition: all 0.2s;
+}
+.reset-btn:hover { border-color: var(–accent2); color: var(–accent2); }
+
+/* Main scroll area */
+.scroll-container {
+position: relative;
+z-index: 5;
+overflow-x: auto;
+padding: 2rem 2.5rem;
+padding-bottom: 4rem;
+}
+
+.grid {
+display: grid;
+grid-template-columns: repeat(10, minmax(130px, 1fr));
+gap: 12px;
+min-width: 1400px;
+position: relative;
+}
+
+/* Period labels */
+.period-header {
+text-align: center;
+padding: 0.5rem;
+font-family: ‘Space Mono’, monospace;
+font-size: 0.65rem;
+color: var(–accent);
+letter-spacing: 0.1em;
+border-bottom: 1px solid var(–accent);
+margin-bottom: 0.5rem;
+opacity: 0.7;
+}
+
+/* Cards */
+.subject-card {
+position: relative;
+border-radius: 8px;
+padding: 0.75rem;
+border: 1.5px solid var(–border);
+background: var(–locked);
+cursor: default;
+transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+min-height: 80px;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+user-select: none;
+}
+.subject-card.available {
+border-color: var(–available);
+background: rgba(124,92,252,0.12);
+cursor: pointer;
+}
+.subject-card.available:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 24px rgba(124,92,252,0.3);
+background: rgba(124,92,252,0.2);
+}
+.subject-card.regular {
+border-color: var(–regular);
+background: rgba(240,165,0,0.12);
+cursor: pointer;
+}
+.subject-card.regular:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 24px rgba(240,165,0,0.3);
+}
+.subject-card.approved {
+border-color: var(–approved);
+background: rgba(0,200,150,0.12);
+cursor: pointer;
+}
+.subject-card.approved:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 24px rgba(0,200,150,0.25);
+}
+.subject-card.special {
+border-style: dashed;
+border-color: var(–accent2);
+background: rgba(255,107,53,0.08);
+}
+.subject-card.special.available,
+.subject-card.special.approved {
+border-style: dashed;
+}
+
+.card-name {
+font-size: 0.72rem;
+font-weight: 700;
+line-height: 1.3;
+color: var(–text);
+}
+.subject-card.locked .card-name { color: var(–muted); }
+
+.card-bottom {
+margin-top: 0.5rem;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.card-hours {
+font-family: ‘Space Mono’, monospace;
+font-size: 0.6rem;
+color: var(–muted);
+}
+.card-status {
+font-size: 0.6rem;
+font-weight: 700;
+letter-spacing: 0.07em;
+font-family: ‘Space Mono’, monospace;
+}
+.subject-card.approved .card-status { color: var(–approved); }
+.subject-card.available .card-status { color: var(–available); }
+.subject-card.regular .card-status { color: var(–regular); }
+.subject-card.locked .card-status { color: var(–muted); }
+
+.card-credits {
+position: absolute;
+top: 6px;
+right: 8px;
+font-size: 0.58rem;
+font-family: ‘Space Mono’, monospace;
+color: var(–muted);
+}
+
+/* Period column wrapper */
+.period-col {
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+
+/* Context menu */
+.ctx-menu {
+position: fixed;
+z-index: 1000;
+background: #1a2332;
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 0.4rem;
+box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+display: none;
+min-width: 160px;
+}
+.ctx-menu.visible { display: block; }
+.ctx-item {
+padding: 0.5rem 0.75rem;
+border-radius: 5px;
+font-size: 0.75rem;
+cursor: pointer;
+transition: background 0.15s;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+}
+.ctx-item:hover { background: rgba(255,255,255,0.07); }
+.ctx-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ctx-divider { height: 1px; background: var(–border); margin: 0.3rem 0; }
+
+/* Tooltip */
+.tooltip {
+position: fixed;
+z-index: 999;
+background: #1a2332;
+border: 1px solid var(–border);
+border-radius: 6px;
+padding: 0.6rem 0.8rem;
+font-size: 0.7rem;
+pointer-events: none;
+display: none;
+max-width: 220px;
+line-height: 1.5;
+}
+.tooltip.visible { display: block; }
+.tooltip strong { color: var(–accent); display: block; margin-bottom: 0.3rem; font-size: 0.75rem; }
+.tooltip .tt-pre { color: var(–muted); font-size: 0.65rem; }
+
+/* Progress bar */
+.progress-bar-wrap {
+position: relative;
+z-index: 10;
+padding: 0.6rem 2.5rem;
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+gap: 1rem;
+}
+.progress-bar {
+flex: 1;
+height: 4px;
+background: var(–border);
+border-radius: 2px;
+overflow: hidden;
+}
+.progress-fill {
+height: 100%;
+background: linear-gradient(90deg, var(–approved), var(–accent));
+transition: width 0.4s ease;
+border-radius: 2px;
+}
+.progress-text {
+font-family: ‘Space Mono’, monospace;
+font-size: 0.7rem;
+color: var(–approved);
+white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+header, .legend, .progress-bar-wrap { padding-left: 1rem; padding-right: 1rem; }
+.scroll-container { padding: 1rem; }
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1>MALLA <span>CURRICULAR</span></h1>
+    <p>INGENIERÍA CIVIL — UNIVERSIDAD DE GUAYAQUIL</p>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num c-accent" id="stat-total">55</div>
+      <div class="stat-label">Materias</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num c-approved" id="stat-approved">0</div>
+      <div class="stat-label">Aprobadas</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num c-regular" id="stat-regular">0</div>
+      <div class="stat-label">Regulares</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num c-available" id="stat-available">0</div>
+      <div class="stat-label">Disponibles</div>
+    </div>
+  </div>
+</header>
+
+<div class="progress-bar-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="progress-text" id="progress-text">0% completado</div>
+</div>
+
+<div class="legend">
+  <span class="legend-label">ESTADO:</span>
+  <div class="leg"><div class="leg-dot approved"></div> Aprobada (click derecho)</div>
+  <div class="leg"><div class="leg-dot regular"></div> Regular</div>
+  <div class="leg"><div class="leg-dot available"></div> Disponible para cursar</div>
+  <div class="leg"><div class="leg-dot locked"></div> Bloqueada</div>
+  <button class="reset-btn" onclick="resetAll()">↺ REINICIAR</button>
+</div>
+
+<div class="scroll-container">
+  <div class="grid" id="curriculum-grid"></div>
+</div>
+
+<!-- Context Menu -->
+
+<div class="ctx-menu" id="ctx-menu">
+  <div class="ctx-item" onclick="setStatus('approved')"><div class="dot" style="background:var(--approved)"></div> Aprobada</div>
+  <div class="ctx-item" onclick="setStatus('regular')"><div class="dot" style="background:var(--regular)"></div> Regular</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="setStatus('locked')"><div class="dot" style="background:var(--muted)"></div> Quitar estado</div>
+</div>
+
+<!-- Tooltip -->
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ============================================================
+// CURRICULUM DATA
+// ============================================================
+const subjects = [
+  // PERÍODO I
+  { id: 'mat1', name: 'Matemáticas I', period: 1, hours: 192, credits: 4, prereqs: [] },
+  { id: 'fis1', name: 'Física I (L)', period: 1, hours: 192, credits: 4, prereqs: [] },
+  { id: 'dem', name: 'Democracia, Ciudadanía y Globalización', period: 1, hours: 96, credits: 2, prereqs: [] },
+  { id: 'len', name: 'Lenguaje y Comunicación', period: 1, hours: 96, credits: 2, prereqs: [] },
+
+  // PERÍODO II
+  { id: 'mat2', name: 'Matemáticas II', period: 2, hours: 192, credits: 4, prereqs: ['mat1'] },
+  { id: 'fis2', name: 'Física II (L)', period: 2, hours: 192, credits: 4, prereqs: ['mat1', 'fis1'] },
+  { id: 'dib1', name: 'Dibujo Técnico I', period: 2, hours: 96, credits: 2, prereqs: [] },
+  { id: 'hdig1', name: 'Herramientas Digitales I', period: 2, hours: 96, credits: 2, prereqs: [] },
+  { id: 'quim', name: 'Química Aplicada', period: 2, hours: 48, credits: 1, prereqs: [] },
+  { id: 'met1', name: 'Metodología de la Investigación I', period: 2, hours: 96, credits: 2, prereqs: ['len'] },
+
+  // PERÍODO III
+  { id: 'mat3', name: 'Matemáticas III', period: 3, hours: 192, credits: 4, prereqs: ['mat2'] },
+  { id: 'est1', name: 'Estadística I', period: 3, hours: 144, credits: 3, prereqs: ['mat2'] },
+  { id: 'dib2', name: 'Dibujo Técnico II', period: 3, hours: 96, credits: 2, prereqs: ['dib1'] },
+  { id: 'hdig2', name: 'Herramientas Digitales II', period: 3, hours: 96, credits: 2, prereqs: ['hdig1'] },
+  { id: 'geo', name: 'Geología Aplicada', period: 3, hours: 96, credits: 2, prereqs: ['quim'] },
+  { id: 'estat', name: 'Estática', period: 3, hours: 96, credits: 2, prereqs: ['mat2', 'fis2'] },
+
+  // PERÍODO IV
+  { id: 'din', name: 'Dinámica', period: 4, hours: 96, credits: 2, prereqs: ['mat3', 'mec1'] },
+  { id: 'mec1', name: 'Mecánica de Suelos I (L)', period: 4, hours: 144, credits: 3, prereqs: ['mat3', 'geo'] },
+  { id: 'top1', name: 'Topografía I (L)', period: 4, hours: 144, credits: 3, prereqs: ['mat3', 'geo'] },
+  { id: 'hdig3', name: 'Herramientas Digitales III', period: 4, hours: 96, credits: 2, prereqs: ['hdig2'] },
+  { id: 'est2', name: 'Estadística II', period: 4, hours: 144, credits: 3, prereqs: ['est1'] },
+  { id: 'soft', name: 'Software para Ingeniería Civil', period: 4, hours: 48, credits: 1, prereqs: ['dib2'] },
+  { id: 'resMat', name: 'Resistencia de Materiales', period: 4, hours: 144, credits: 3, prereqs: ['estat'] },
+
+  // PERÍODO V
+  { id: 'mec2', name: 'Mecánica de Suelos II (L)', period: 5, hours: 144, credits: 3, prereqs: ['mat3', 'mec1'] },
+  { id: 'top2', name: 'Topografía II (L)', period: 5, hours: 144, credits: 3, prereqs: ['top1'] },
+  { id: 'ensayo', name: 'Ensayo de Materiales (L)', period: 5, hours: 96, credits: 2, prereqs: ['resMat'] },
+  { id: 'hid1', name: 'Hidráulica I', period: 5, hours: 192, credits: 4, prereqs: ['mat3', 'mec1'] },
+  { id: 'met2', name: 'Metodología de Investigación II', period: 5, hours: 144, credits: 3, prereqs: ['est2'] },
+  { id: 'est_str1', name: 'Ingeniería de Estructuras I', period: 5, hours: 144, credits: 3, prereqs: ['resMat', 'din'] },
+
+  // PERÍODO VI
+  { id: 'cim', name: 'Cimientos', period: 6, hours: 144, credits: 3, prereqs: ['mec2'] },
+  { id: 'geo2', name: 'Geotécnia', period: 6, hours: 96, credits: 2, prereqs: ['cim'] },
+  { id: 'hid2', name: 'Hidráulica II', period: 6, hours: 144, credits: 3, prereqs: ['hid1'] },
+  { id: 'carr1', name: 'Carreteras I', period: 6, hours: 96, credits: 2, prereqs: ['top2'] },
+  { id: 'est_str2', name: 'Ingeniería de Estructuras II', period: 6, hours: 144, credits: 4, prereqs: ['soft', 'est_str1'] },
+  { id: 'horm1', name: 'Hormigón Armado I', period: 6, hours: 144, credits: 3, prereqs: ['ensayo'] },
+
+  // PERÍODO VII
+  { id: 'hidr', name: 'Hidrología', period: 7, hours: 144, credits: 3, prereqs: ['hid1', 'top2'] },
+  { id: 'ob_hid', name: 'Obras Hidráulicas', period: 7, hours: 96, credits: 2, prereqs: ['hidr', 'hid2'] },
+  { id: 'carr2', name: 'Carreteras II', period: 7, hours: 144, credits: 3, prereqs: ['carr1'] },
+  { id: 'san1', name: 'Ingeniería Sanitaria I', period: 7, hours: 144, credits: 3, prereqs: ['hid2'] },
+  { id: 'dis_metal', name: 'Diseño de Estructuras Metálicas', period: 7, hours: 96, credits: 2, prereqs: ['est_str1'] },
+  { id: 'horm2', name: 'Hormigón Armado II', period: 7, hours: 144, credits: 3, prereqs: ['horm1'] },
+  { id: 'inst', name: 'Instalaciones en Edificaciones', period: 7, hours: 96, credits: 2, prereqs: ['san1'] },
+
+  // PERÍODO VIII
+  { id: 'ob_port', name: 'Obras Portuarias', period: 8, hours: 144, credits: 3, prereqs: ['ob_hid'] },
+  { id: 'ing_trans', name: 'Ingeniería de Tránsito', period: 8, hours: 96, credits: 2, prereqs: ['carr2'] },
+  { id: 'san2', name: 'Ingeniería Sanitaria II', period: 8, hours: 192, credits: 4, prereqs: ['san1'] },
+  { id: 'dis_sismo', name: 'Diseño Sismorresistente', period: 8, hours: 144, credits: 3, prereqs: ['est_str2'] },
+  { id: 'puen', name: 'Puentes', period: 8, hours: 96, credits: 2, prereqs: ['dis_metal', 'horm2'] },
+  { id: 'emp', name: 'Emprendimiento e Innovación', period: 8, hours: 96, credits: 2, prereqs: ['met2'] },
+  { id: 'marco', name: 'Marco Legal, Reglamentos y Normas', period: 8, hours: 96, credits: 2, prereqs: ['est_str2'] },
+
+  // PERÍODO IX
+  { id: 'dren', name: 'Drenaje', period: 9, hours: 96, credits: 2, prereqs: ['hidr', 'carr1'] },
+  { id: 'imp_amb', name: 'Impacto Ambiental', period: 9, hours: 96, credits: 2, prereqs: ['san2'] },
+  { id: 'plan', name: 'Planificación de Obras', period: 9, hours: 48, credits: 1, prereqs: [] },
+  { id: 'const', name: 'Construcción y Costos de Obras', period: 9, hours: 144, credits: 3, prereqs: ['dis_sismo', 'san1'] },
+  { id: 'serv_com', name: 'Servicio Comunitario', period: 9, hours: 48, credits: 1, prereqs: [], special: true },
+
+  // PERÍODO X
+  { id: 'prac', name: 'Prácticas Preprofesionales', period: 10, hours: 240, credits: 5, prereqs: [], special: true },
+  { id: 'tit', name: 'Trabajo de Titulación', period: 10, hours: 160, credits: 5, prereqs: ['emp'], special: true },
+];
+
+// State
+const state = {};
+subjects.forEach(s => state[s.id] = 'locked');
+
+// Set initially available (no prereqs)
+function computeAvailability() {
+  subjects.forEach(s => {
+    if (state[s.id] === 'approved' || state[s.id] === 'regular') return;
+    const canTake = s.prereqs.every(pid => state[pid] === 'approved');
+    state[s.id] = canTake ? 'available' : 'locked';
+  });
+}
+
+// Context menu state
+let activeCardId = null;
+
+function setStatus(status) {
+  if (!activeCardId) return;
+  const subj = subjects.find(s => s.id === activeCardId);
+  if (!subj) return;
+
+  // Only allow state changes for available cards
+  const currentState = state[activeCardId];
+  if (status === 'locked') {
+    state[activeCardId] = 'locked';
+  } else {
+    if (currentState === 'locked' && status !== 'locked') return; // can't set if locked
+    state[activeCardId] = status;
+  }
+
+  computeAvailability();
+  renderAll();
+  hideCtxMenu();
+}
+
+function resetAll() {
+  subjects.forEach(s => state[s.id] = 'locked');
+  computeAvailability();
+  renderAll();
+}
+
+function hideCtxMenu() {
+  document.getElementById('ctx-menu').classList.remove('visible');
+  activeCardId = null;
+}
+
+// Render
+function renderAll() {
+  const grid = document.getElementById('curriculum-grid');
+  grid.innerHTML = '';
+
+  const periods = [...new Set(subjects.map(s => s.period))].sort((a,b)=>a-b);
+  const periodNames = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+
+  periods.forEach((period, idx) => {
+    const col = document.createElement('div');
+    col.className = 'period-col';
+
+    const header = document.createElement('div');
+    header.className = 'period-header';
+    header.textContent = `PERÍODO ${periodNames[idx] || period}`;
+    col.appendChild(header);
+
+    const periodSubjects = subjects.filter(s => s.period === period);
+    periodSubjects.forEach(subj => {
+      const card = document.createElement('div');
+      card.className = `subject-card ${state[subj.id]}${subj.special ? ' special' : ''}`;
+      card.dataset.id = subj.id;
+
+      const statusLabels = { approved: 'APROBADA', regular: 'REGULAR', available: 'DISPONIBLE', locked: 'BLOQUEADA' };
+
+      card.innerHTML = `
+        <div>
+          <div class="card-credits">${subj.credits} CR</div>
+          <div class="card-name">${subj.name}</div>
+        </div>
+        <div class="card-bottom">
+          <div class="card-hours">${subj.hours}h</div>
+          <div class="card-status">${statusLabels[state[subj.id]]}</div>
+        </div>
+      `;
+
+      // Click = cycle through available→approved
+      card.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cur = state[subj.id];
+        if (cur === 'locked') return;
+        if (cur === 'available') {
+          // Can't directly approve, open context menu
+          showCtxMenu(e, subj.id);
+          return;
+        }
+        // If approved or regular, cycle back
+        showCtxMenu(e, subj.id);
+      });
+
+      card.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (state[subj.id] === 'locked') return;
+        showCtxMenu(e, subj.id);
+      });
+
+      // Tooltip on hover
+      card.addEventListener('mouseenter', (e) => {
+        const tt = document.getElementById('tooltip');
+        let prereqText = '';
+        if (subj.prereqs.length > 0) {
+          const names = subj.prereqs.map(pid => {
+            const ps = subjects.find(s => s.id === pid);
+            return ps ? ps.name : pid;
+          });
+          prereqText = `<div class="tt-pre">Pre-req: ${names.join(', ')}</div>`;
+        } else {
+          prereqText = `<div class="tt-pre">Sin pre-requisitos</div>`;
+        }
+        tt.innerHTML = `<strong>${subj.name}</strong>${prereqText}<div class="tt-pre" style="margin-top:4px">${subj.hours}h · ${subj.credits} créditos</div>`;
+        tt.classList.add('visible');
+        moveTooltip(e);
+      });
+      card.addEventListener('mousemove', moveTooltip);
+      card.addEventListener('mouseleave', () => {
+        document.getElementById('tooltip').classList.remove('visible');
+      });
+
+      col.appendChild(card);
+    });
+
+    grid.appendChild(col);
+  });
+
+  updateStats();
+}
+
+function moveTooltip(e) {
+  const tt = document.getElementById('tooltip');
+  tt.style.left = (e.clientX + 15) + 'px';
+  tt.style.top = (e.clientY - 10) + 'px';
+}
+
+function showCtxMenu(e, id) {
+  activeCardId = id;
+  const menu = document.getElementById('ctx-menu');
+  menu.classList.add('visible');
+  
+  let x = e.clientX, y = e.clientY;
+  if (x + 180 > window.innerWidth) x -= 180;
+  if (y + 120 > window.innerHeight) y -= 120;
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+}
+
+function updateStats() {
+  const approved = Object.values(state).filter(v => v === 'approved').length;
+  const regular = Object.values(state).filter(v => v === 'regular').length;
+  const available = Object.values(state).filter(v => v === 'available').length;
+  const total = subjects.length;
+
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-regular').textContent = regular;
+  document.getElementById('stat-available').textContent = available;
+
+  const pct = Math.round((approved / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${pct}% completado (${approved}/${total})`;
+}
+
+// Init
+computeAvailability();
+renderAll();
+
+// Close menu on outside click
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('ctx-menu').contains(e.target)) {
+    hideCtxMenu();
+  }
+});
+
+// Persist to localStorage
+function saveState() {
+  try { localStorage.setItem('malla_civil_state', JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try {
+    const saved = localStorage.getItem('malla_civil_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      Object.assign(state, parsed);
+    }
+  } catch(e) {}
+}
+
+// Override setStatus to also save
+const _origSetStatus = setStatus;
+window.setStatus = function(s) {
+  _origSetStatus(s);
+  saveState();
+};
+
+function resetAll() {
+  subjects.forEach(s => state[s.id] = 'locked');
+  computeAvailability();
+  renderAll();
+  saveState();
+}
+
+loadState();
+computeAvailability();
+renderAll();
+</script>
+
+</body>
+</html>
